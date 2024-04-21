@@ -33,44 +33,18 @@
 #include "sensirion_common.h"
 #include "sensirion_config.h"
 
-/*
- * INSTRUCTIONS
- * ============
- *
- * Implement all functions where they are marked as IMPLEMENT.
- * Follow the function specification in the comments.
- */
+#include "hardware/i2c.h"
+#include "pico/stdlib.h"
+#include <stdint.h>
 
-/**
- * Select the current i2c bus by index.
- * All following i2c operations will be directed at that bus.
- *
- * THE IMPLEMENTATION IS OPTIONAL ON SINGLE-BUS SETUPS (all sensors on the same
- * bus)
- *
- * @param bus_idx   Bus index to select
- * @returns         0 on success, an error code otherwise
- */
-int16_t sensirion_i2c_hal_select_bus(uint8_t bus_idx) {
-    /* TODO:IMPLEMENT or leave empty if all sensors are located on one single
-     * bus
-     */
-    return NOT_IMPLEMENTED_ERROR;
-}
+static i2c_inst_t* s_i2c0 = 0;
 
 /**
  * Initialize all hard- and software components that are needed for the I2C
  * communication.
  */
-void sensirion_i2c_hal_init(void) {
-    /* TODO:IMPLEMENT */
-}
-
-/**
- * Release all resources initialized by sensirion_i2c_hal_init().
- */
-void sensirion_i2c_hal_free(void) {
-    /* TODO:IMPLEMENT or leave empty if no resources need to be freed */
+void sensirion_i2c_hal_init(i2c_inst_t* i2c) {
+    s_i2c0 = i2c;
 }
 
 /**
@@ -84,8 +58,12 @@ void sensirion_i2c_hal_free(void) {
  * @returns 0 on success, error code otherwise
  */
 int8_t sensirion_i2c_hal_read(uint8_t address, uint8_t* data, uint16_t count) {
-    /* TODO:IMPLEMENT */
-    return NOT_IMPLEMENTED_ERROR;
+    if (PICO_ERROR_GENERIC ==
+        i2c_read_blocking(s_i2c0, address, data, count, false)) {
+        printf("[%s] generic read error!\n", "scd30");
+        return 1;
+    }
+    return 0;
 }
 
 /**
@@ -101,8 +79,16 @@ int8_t sensirion_i2c_hal_read(uint8_t address, uint8_t* data, uint16_t count) {
  */
 int8_t sensirion_i2c_hal_write(uint8_t address, const uint8_t* data,
                                uint16_t count) {
-    /* TODO:IMPLEMENT */
-    return NOT_IMPLEMENTED_ERROR;
+    switch (i2c_write_blocking(s_i2c0, address, data, count, false)) {
+        case PICO_ERROR_GENERIC:
+            printf("[%s] addr not acknowledged!\n", "scd30");
+            break;
+        case PICO_ERROR_TIMEOUT:
+            printf("[%s] timeout!\n", "scd30");
+            break;
+        default:
+            break;
+    }
 }
 
 /**
@@ -114,5 +100,5 @@ int8_t sensirion_i2c_hal_write(uint8_t address, const uint8_t* data,
  * @param useconds the sleep time in microseconds
  */
 void sensirion_i2c_hal_sleep_usec(uint32_t useconds) {
-    /* TODO:IMPLEMENT */
+    sleep_us(useconds);
 }
