@@ -82,12 +82,12 @@ int8_t sensirion_i2c_hal_write(uint8_t address, const uint8_t* data,
     switch (i2c_write_blocking(s_i2c0, address, data, count, false)) {
         case PICO_ERROR_GENERIC:
             printf("[%s] addr not acknowledged!\n", "scd30");
-            break;
+            return 1;
         case PICO_ERROR_TIMEOUT:
             printf("[%s] timeout!\n", "scd30");
-            break;
+            return 2;
         default:
-            break;
+            return 0;
     }
 }
 
